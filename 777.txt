@@ -1,0 +1,116 @@
+
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.1/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+<script type='text/javascript'>var $j = jQuery.noConflict();</script>
+
+<link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.13/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="//cdn.datatables.net/1.10.13/js/jquery.dataTables.js"></script>
+
+
+
+<script>
+$j(document).ready(function(){
+    var table = $j('#table_id').DataTable({
+        // Creation of the entries in number of item showed filter
+        aLengthMenu: [
+        [25, 50, 100, 200, -1],
+        [25, 50, 100, 200, "All"]
+    ],
+         // Default value for the item showed filter
+         "iDisplayLength": -1,
+         // This makes the table unsorted by default
+         "aaSorting": []
+     } );
+
+$j('#table_id thead tr').clone(true).appendTo( '#table_id thead' );
+$j('#table_id thead tr:eq(1) th').each( function (i) {
+    var title = jQuery(this).text();
+    $j(this).html( '<input type="text" placeholder="Search '+title+'" />' );
+
+    $j( 'input', this ).on( 'keyup change', function () {
+        if ( table.column(i).search() !== this.value ) {
+          table.column(i)
+              .search( this.value )
+              .draw();
+        }
+    });
+});
+
+});
+
+
+</script>
+
+
+ <table border=1 cellpadding=5 id="table_id" class="display">
+      <thead>
+
+        <tr>
+            <th width="250" align="center">Document Title</th>
+            <th width="250" align="center">Document Author</th>
+            <th width="250" align="center">Document Status</th>
+            <th width="250" align="center">Document COREF</th>
+        </tr>
+      </thead>
+      <tbody>
+#set ($params= $pageParameters.ReqOwner.toLucene)
+
+#set ($paramsString=$params.toString())
+
+#set ($b = $paramsString.replace("(", "")) 
+
+#set ($c = $b.replace(")", ""))
+
+#set ($d=$c.trim())
+
+#set ($dataService = $trackerService.getDataService())
+
+#set ($sqlUpdatedDocQuery = "SELECT module.c_uri FROM POLARION.MODULE ")
+
+ #set ($documentsA = $dataService.sqlSearch($sqlUpdatedDocQuery))
+ 
+#foreach($doc in $documentsA)
+#if (!$doc.isUnresolvable() && !$doc.getAuthor().isUnresolvable())
+
+
+#set ($ReqOwner=$doc.getCustomField("requirementOwner").getId())
+
+#if ($ReqOwner==$d)
+
+ #set ($Comments=$doc.getRootComments())
+
+#if ($Comments.size()>0)
+
+#set ($corefs=$doc.getValue("coref"))
+
+ #set ( $corefList = "" )
+#foreach($coref in $corefs)
+#if ( $corefList == "" )
+ #set ( $corefList = "$coref.getName()<br>" )
+            #else
+                #set ( $corefList  = "$corefList$coref.getName()<br>" )
+            #end
+        
+		#end
+
+
+<tr>
+ 
+            <td align="left">$doc.getTitle()</td>
+          <td align="left">$doc.getAuthor().getName()</td>
+            <td align="left">$doc.getStatus().getName()</td>   
+            <td align="left">$corefList</td>   
+##        <td align="left">$projectService.getUser($corefList)</td>
+
+#end
+#end
+#end
+#end
+    
+        </tr>
+  
+      </tbody>
+    </table>
+    
+ 
